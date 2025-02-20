@@ -1,0 +1,1 @@
+conda create --name cow python=3.10
