@@ -169,3 +169,18 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# README.md 파일 제외
+README.md
+
+# .env 파일 제외
+.env
+
+# 모든 디렉토리의 .env 제외
+**/.env
+
+#.env.dev, .env.prod 같은 변형 파일도 모두 제외
+.env*
+
+# docs 폴더와 그 하위 모든 내용 제외
+/docs/
