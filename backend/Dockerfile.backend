@@ -1,0 +1,14 @@
+# Python 3.10 이상을 사용하도록 변경
+FROM python:3.11
+
+# 기본 패키지 설치
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3.11 \
+    && rm -rf /var/lib/apt/lists/*
+    
+WORKDIR /app
+COPY requirements.backend.txt .
+RUN pip install -r requirements.backend.txt
+COPY . .
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

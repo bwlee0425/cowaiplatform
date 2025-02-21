@@ -1,0 +1,21 @@
+services:
+  backend:
+    build:
+      context: ./backend   # 여기서 ./backend는 Dockerfile이 위치한 디렉토리입니다.
+      dockerfile: Dockerfile.backend
+    image: backend:v1.0.250221  # 이미지 이름을 지정 (이미지이름,my-backend:태그이름,latest)
+    container_name: backend-container  # 컨테이너 이름을 사용자 지정
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+  frontend:
+    build:
+      context: ./frontend # ./frontend는 해당 서비스의 Dockerfile이 위치한 디렉토리입니다.
+      dockerfile: Dockerfile.frontend
+    image: frontend:v1.0.250221  # 이미지 이름을 지정 (my-frontend:latest)
+    container_name: frontend-container  # 컨테이너 이름을 사용자 지정
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
