@@ -1,4 +1,4 @@
-name: Code Review From ChatGPT
+name: Code Review From Gemini
 
 permissions:
   contents: read
@@ -12,9 +12,16 @@ jobs:
   code-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: anc95/ChatGPT-CodeReview@main
+      - name: Request Code Review from Gemini
+        run: |
+          curl "https://generativelanguage.googleapis.com/v1beta/models/${{ secrets.MODEL }}:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
+          -H 'Content-Type: application/json' \
+          -X POST \
+          -d '{
+            "contents": [{
+              "parts":[{"text": "Review the following code for quality and improvements."}]
+            }]
+          }'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          LANGUAGE: Korean
-          MODEL: gpt-4
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          MODEL: gemini-1.5-flash  # 원하는 모델 이름을 설정
