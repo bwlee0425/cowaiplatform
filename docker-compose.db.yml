@@ -1,0 +1,72 @@
+
+services:
+
+  # web:
+  #   build: .
+  #   environment:
+  #     ENVIRONMENT: docker  # Docker 환경을 명시적으로 설정
+  #     DATABASE_URL: postgres://admin:1@postgres-container:5432/db_cowai
+  #     MONGODB_URL: mongodb://mongo:27017/db_cowai
+  #     REDIS_URL: redis://redis:6379
+  #   depends_on:
+  #     - postgresql
+  #     - mongo
+  #     - redis
+  #   networks:
+  #     - dbnetwork
+
+
+  postgresql:
+    image: postgres:latest
+    container_name: postgres-container
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1"
+      POSTGRES_DB: db_cowai
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./shared/db/postgresql/pg.hba.conf:/var/lib/postgresql/data/pg_hba.conf
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dbnetwork
+
+  
+
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-container
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: "1"
+    volumes:
+      - mongo_data:/data/db  # MongoDB 데이터 영속성을 위해 볼륨 설정
+    ports:
+      - "27017:27017"
+    networks:
+      - dbnetwork
+
+
+  redis:
+    image: redis:latest
+    container_name: redis-container
+    volumes:
+      - redis_data:/data  # Redis 데이터 영속성을 위해 볼륨 설정
+    ports:
+      - "6379:6379"
+    networks:
+      - dbnetwork
+    command: ["redis-server", "--bind", "0.0.0.0"]  # 외부 접속 허용
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  mongo_data:
+    driver: local
+
+networks:
+  dbnetwork:
+    driver: bridge

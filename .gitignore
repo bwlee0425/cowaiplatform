@@ -172,6 +172,11 @@ cython_debug/
 
 # README.md 파일 제외
 README.md
+Makefile
+package-lock.json.md
+package.json.md
+requirements.md
+update_env.sh
 
 # 모든 디렉토리의 .env 제외
 **/.env
@@ -181,3 +186,9 @@ README.md
 
 # docs 폴더와 그 하위 모든 내용 제외
 /docs/
+/infra/
+/mobile/
+/node_modules.md/
+/shared/
+/tests/
+/worker/
