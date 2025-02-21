@@ -12,16 +12,32 @@ jobs:
   code-review:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: |
+          npm install @google/generative-ai
+
       - name: Request Code Review from Gemini
         run: |
-          curl "https://generativelanguage.googleapis.com/v1beta/models/${{ secrets.MODEL }}:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
-          -H 'Content-Type: application/json' \
-          -X POST \
-          -d '{
-            "contents": [{
-              "parts":[{"text": "Review the following code for quality and improvements."}]
-            }]
-          }'
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          MODEL: gemini-1.5-flash  # 원하는 모델 이름을 설정
+          node <<EOF
+          const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+          const genAI = new GoogleGenerativeAI("${{ secrets.GEMINI_API_KEY }}");
+
+          async function run() {
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+            const prompt = "Review the following code for quality and improvements.";
+
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+            console.log(text);
+          }
+
+          run();
+          EOF
