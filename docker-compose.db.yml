@@ -31,7 +31,7 @@ services:
     networks:
       - dbnetwork
 
-  
+  # voulumes 은 Docker에서 호스트(로컬) 디렉토리와 컨테이너 내부 디렉토리를 연결
 
 
   mongodb:

@@ -5,10 +5,28 @@ services:
       dockerfile: Dockerfile.backend
     image: backend:v1.0.250221  # 이미지 이름을 지정 (이미지이름,my-backend:태그이름,latest)
     container_name: backend-container  # 컨테이너 이름을 사용자 지정
+    # command: >
+    #   bash -c "python manage.py makemigrations &&
+    #            python manage.py migrate &&
+    #            python manage.py collectstatic --noinput"
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./shared:/app/shared
+    environment: # 컨테이너 내부 환경변수 설정, 우선순위 높음
+      POSTGRES_URI: postgres://admin:1@postgres-container:5432/db_cowai  # PostgreSQL 연결 URI
+      MONGODB_URI: mongodb://mongodb-container:27017
+      REDIS_URI: redis://redis-container:6379
+      DEBUG: "False"  # 다른 환경 변수 추가 가능
+      DOCKER_ENV: "true"
+    env_file:
+      - .env  # 현재 docker-compose.yml이 위치한 폴더에 있는 .env 파일을 로드
+    networks:
+      - dbnetwork
+
+  # voulumes 은 Docker에서 호스트(로컬) 디렉토리와 컨테이너 내부 디렉토리를 연결
+
   frontend:
     build:
       context: ./frontend # ./frontend는 해당 서비스의 Dockerfile이 위치한 디렉토리입니다.
@@ -19,3 +37,18 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app
+    networks:
+      - dbnetwork
+
+  # fastapi:
+  #   build:
+  #     context: .
+  #     dockerfile: ./fastapi/.Dockerfile.fastapi
+  #   ports:
+  #     - "8001:8001"
+  #   networks:
+  #     - dbnetwork
+
+networks:
+  dbnetwork:
+    driver: bridge

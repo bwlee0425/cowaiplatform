@@ -9,7 +9,8 @@ docker compose down
 
 # docker-compose up -d 실행
 Write-Host "Starting containers in detached mode..."
-docker compose up -d
+#docker compose up -d
+docker compose up --build -d
 
 docker ps -a
 # update_env.sh 실행

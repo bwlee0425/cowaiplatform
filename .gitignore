@@ -177,6 +177,7 @@ package-lock.json.md
 package.json.md
 requirements.md
 update_env.sh
+docker-compose.yml
 
 # 모든 디렉토리의 .env 제외
 **/.env
