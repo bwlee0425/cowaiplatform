@@ -1,8 +1,9 @@
 from django.urls import path
-from services.estrus_detection.views import EstrusDetectionView
+from services_ai.estrus_detection.views import EstrusDetectionView, estrus_prediction
 
 urlpatterns = [
-    path('estrus/', EstrusDetectionView.as_view()),  # '/estrus/' 경로로 요청이 들어오면 EstrusDetectionView 실행
+    path('estrus/', EstrusDetectionView.as_view(), name='estrus_detection'),  # 클래스 기반 뷰
+    path("estrus/predict/", estrus_prediction, name="estrus_prediction"),     # 함수 기반 뷰
 ]
 
 """path('estrus/', EstrusDetectionView.as_view()):

@@ -1,14 +1,26 @@
 # Python 3.10 이상을 사용하도록 변경
-FROM python:3.11
+FROM python:3.10
 
-# 기본 패키지 설치
-RUN apt-get update && apt-get install -y \
-    python3-pip \
-    python3.11 \
-    && rm -rf /var/lib/apt/lists/*
-    
+# 환경 변수 설정
+ENV DJANGO_ENV_PATH=/app/.env
+ENV SHARED_DIR=/app/shared
+
+# 컨테이너 작업디렉토리
 WORKDIR /app
+
+# 첫 번째 목록 복사하고 설치 (기본 라이브러리)
 COPY requirements.backend.txt .
 RUN pip install -r requirements.backend.txt
+
+# 두 번째 목록 복사하고 설치 (PyTorch 관련)
+COPY requirements.backend2.txt .
+RUN pip install -r requirements.backend2.txt
+# --cache-dir 사용 : docker 배포시 이미지크기 감소, 빌드속도 증가
+#RUN pip install --no-cache-dir -r requirements.backend.txt
+
+# 모든 코드 복사
 COPY . .
+
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+# .gitignore 가 똑같이 적용되어 .env 는 빌드되지 않는다.
