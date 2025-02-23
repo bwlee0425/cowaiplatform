@@ -71,8 +71,6 @@ urlpatterns += [
 # 나머지 API 경로 설정
 urlpatterns += [
     path('admin/', admin.site.urls),
-    path('auth/', include('social_django.urls')),  # 소셜 로그인 URL
-    path('auth2/', include('accounts.urls'), name='google'),  # 소셜 로그인 URL
     path('api/', include('api.urls'), name='api'),  # api/ 경로를 포함
 ]
 

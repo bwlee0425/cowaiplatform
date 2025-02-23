@@ -64,8 +64,6 @@ else:
 # SECURITY WARNING: keep the secret key used in production secret!
 #SECRET_KEY='django-insecure-8&m9+wdcw0^989x5hfii67osmuxo9m1fk56u87u#o-qhsrv!^7'
 SECRET_KEY = env('SECRET_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', default=False)
@@ -144,7 +142,6 @@ INSTALLED_APPS = [
     'accounts',
     'api',
     'services_ai',
-    'social_django',
 ]
 
 MIDDLEWARE = [
@@ -160,22 +157,7 @@ MIDDLEWARE = [
 
 ]
 
-AUTHENTICATION_BACKENDS = (
-    'social_core.backends.google.GoogleOAuth2',
-    'social_core.backends.naver.NaverOAuth2',
-    'django.contrib.auth.backends.ModelBackend',  # Django의 기본 인증 백엔드
-)
-
 LOGIN_REDIRECT_URL = '/'
-# redirect URI 설정 (이것은 클라이언트에서 받는 토큰으로 백엔드 인증을 처리하는 로직)
-SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'http://localhost:3000/api/auth/google/callback/'
-
-SOCIAL_AUTH_PIPELINE = (
-    'social_core.pipeline.social_auth.social_user',
-    'social_core.pipeline.social_auth.associate_by_email',
-    'social_core.pipeline.social_auth.load_extra_data',
-    'social_core.pipeline.user.user_details',
-)
 
 # 디버그 툴바가 동작할 IP 설정 (로컬호스트 기본값)
 INTERNAL_IPS = [
