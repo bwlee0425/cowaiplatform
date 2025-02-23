@@ -15,23 +15,57 @@ import logging.config
 import environ
 import mongoengine
 import os
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.authentication import BasicAuthentication
+from rest_framework.authentication import TokenAuthentication
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths inside the project like this: BASE_DIR / 'subdir'. / 'backend'
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# root_dir 설정 (cowaiplatform 폴더로)
-project_root_dir = BASE_DIR.parent  # cowaiplatform 폴더
+def get_project_root():
+    """
+    상위 디렉토리를 탐색하여 'shared' 폴더가 있는 루트를 반환.
+    찾지 못하면 에러 발생.
+    """
+    current_dir = BASE_DIR
+    while current_dir != current_dir.parent:  # 최상위 디렉토리(/)까지 탐색
+        if (current_dir / "shared").exists():
+            return current_dir
+        current_dir = current_dir.parent
+    
+    # 최상위까지 갔는데도 없으면 에러
+    raise FileNotFoundError("프로젝트 루트에서 'shared' 폴더를 찾을 수 없습니다.")
 
-# 환경 변수 로드
+# 루트 설정, 루트 가변적
+VARIABLE_ROOT = get_project_root()
+
+# /shared/aimodels 경로 설정
+SHARED_AIMODELS = VARIABLE_ROOT / "shared" / "aimodels"
+SHARED = VARIABLE_ROOT / "shared"
+
+# 경로가 존재하는지 확인
+if not SHARED_AIMODELS.exists():
+    raise FileNotFoundError(f"'shared/aimodels' 폴더를 찾을 수 없습니다: {SHARED_AIMODELS}")
+
+# root_dir 설정 (cowaiplatform 폴더로)
+cowaiplatform = BASE_DIR.parent
+
+# environ을 사용하여 .env 파일 로드
 env = environ.Env()
-environ.Env.read_env(project_root_dir / ".env")  # .env 파일을 상위 폴더에서 읽음
+env_path = (cowaiplatform / ".env") if (cowaiplatform / ".env").exists() else (BASE_DIR / ".env")
+if env_path.exists():
+    env.read_env(env_path)
+else:
+    print("⚠️ 환경 변수 파일(.env)을 찾을 수 없습니다.")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8&m9+wdcw0^989x5hfii67osmuxo9m1fk56u87u#o-qhsrv!^7'
-#SECRET_KEY = env('SECRET_KEY')
+#SECRET_KEY='django-insecure-8&m9+wdcw0^989x5hfii67osmuxo9m1fk56u87u#o-qhsrv!^7'
+SECRET_KEY = env('SECRET_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', default=False)
@@ -40,7 +74,7 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 # 로그 관련 설정
 LOG_LEVEL = env('LOG_LEVEL', default='INFO')
-LOG_FILE_PATH = env('LOG_FILE_PATH', default=str(project_root_dir / 'log' / 'myapp.log'))
+LOG_FILE_PATH = env('LOG_FILE_PATH', default=str(cowaiplatform / 'log' / 'myapp.log'))
 
 # 로그 디렉토리가 없다면 생성
 log_dir = os.path.dirname(LOG_FILE_PATH)
@@ -76,13 +110,22 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': LOG_LEVEL,
             'propagate': True,
         },
     },
 }
 
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'tools.custom_exception_handler.custom_exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',  # 세션 인증 사용
+        'rest_framework.authentication.BasicAuthentication',  # 기본 인증 사용        
+        'rest_framework.authentication.TokenAuthentication',  # 토큰 인증 사용        
+    ],
+}
 
 # Application definition
 
@@ -93,9 +136,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar',
+    'corsheaders',
+    'drf_yasg',
+    'drf_spectacular',
+    'rest_framework',
+    'accounts',
+    'api',
+    'services_ai',
+    'social_django',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -103,7 +156,40 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.naver.NaverOAuth2',
+    'django.contrib.auth.backends.ModelBackend',  # Django의 기본 인증 백엔드
+)
+
+LOGIN_REDIRECT_URL = '/'
+# redirect URI 설정 (이것은 클라이언트에서 받는 토큰으로 백엔드 인증을 처리하는 로직)
+SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'http://localhost:3000/api/auth/google/callback/'
+
+SOCIAL_AUTH_PIPELINE = (
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.social_auth.associate_by_email',
+    'social_core.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.user.user_details',
+)
+
+# 디버그 툴바가 동작할 IP 설정 (로컬호스트 기본값)
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React 서버 주소
+    "http://127.0.0.1:5500",  # VS Code Live Server 기본 포트
+    "http://localhost:5500",
+]
+
+# 개발 중에만 사용 (프로덕션에서는 사용하지 마세요!)
+#CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'config.urls'
 
@@ -204,7 +290,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ko-kr'
 
-TIME_ZONE = 'Asia/Seo'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
